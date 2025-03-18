@@ -30,6 +30,10 @@
 
 ### 基础数据结构
 基础数据结构提供了必要的接口定义，用于实现插件间的交互。
+
+> [!WARNING]  
+> 插件目前还在开发版本，下面的接口在接下来的版本中可能会有变动
+
 ```typescript
 export interface ApiResponseNoData {
     code: number // 状态码
