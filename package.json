@@ -1,14 +1,22 @@
 {
   "name": "koishi-plugin-pointmint",
   "description": "Points management system plugin",
-  "version": "0.0.1",
+  "version": "0.0.5-dev",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
     "dist"
   ],
-  "license": "MIT",
+  "contributors": [
+    "小舍 <DMB-codegang@users.noreply.github.com>"
+  ],
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/DMB-codegang/koishi-plugin-codegang-jf",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DMB-codegang/koishi-plugin-codegang-jf.git"
+  },
   "scripts": {},
   "keywords": [
     "chatbot",
@@ -18,5 +26,16 @@
   "devDependencies": {},
   "peerDependencies": {
     "koishi": "^4.18.3"
+  },
+  "koishi": {
+    "description": {
+      "zh": "模块化架构｜可审计事务追踪｜实时积分生态 - 基于双效校验机制的经济引擎",
+      "en": "Modular Architecture | Auditable Transaction Tracing | Real-time Points Ecosystem - Economic Engine with Dual-validation Protocol"
+    },
+    "service": {
+      "required": ["database"],
+      "implements": ["points"]
+    },
+    "preview": true
   }
 }
