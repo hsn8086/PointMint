@@ -1,53 +1,33 @@
-name: 构建与发布
+name: Publish Plugin
 
 on:
   push:
-    branches: [ main, master ]
-    tags: [ 'v*' ]
+    tags:
+      - 'v*[!dev]*'
 
 jobs:
-  build-and-publish:
+  publish:
     runs-on: windows-latest
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
         
-      - name: 设置 Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          
-      - name: 安装依赖
-        run: yarn install
-        
-      - name: 检查版本
-        id: check_version
-        run: |
-          $version = node -p "require('./package.json').version"
-          if ($version -notmatch "-dev") {
-            echo "is_release=true" >> $env:GITHUB_OUTPUT
-          } else {
-            echo "is_release=false" >> $env:GITHUB_OUTPUT
-          }
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-        shell: pwsh
-        
-      - name: 构建项目
-        if: steps.check_version.outputs.is_release == 'true'
-        run: yarn build
-        
-      - name: 发布到 NPM
-        if: steps.check_version.outputs.is_release == 'true'
-        run: yarn workspace koishi-plugin-pointmint publish
+
+      - name: Install dependencies
+        working-directory: external/pointmint
+        run: npm install
+
+      - name: Build plugin
+        working-directory: external/pointmint
+        run: npm run build
+
+      - name: Publish to npm
+        working-directory: external/pointmint
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
-      - name: 创建 GitHub Release
-        if: steps.check_version.outputs.is_release == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          name: v${{ steps.check_version.outputs.version }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish
