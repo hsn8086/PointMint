@@ -23,7 +23,9 @@ export class LogService {
       statusCode: 'integer',
       time: 'timestamp',
       oldValue: 'integer',
-      transactionId: 'string'
+      transactionId: 'string',
+      isRollback: 'boolean',
+      rollbackTransaction: 'string'
     }, { primary: 'id' })
   }
   private shouldSkipLog(logData: { operationType: string; statusCode: number }): boolean {
@@ -51,7 +53,9 @@ export class LogService {
       comment: logData.comment,
       oldValue: logData.oldValue ?? 0,
       transactionId: logData.transactionId,
-      time: new Date()
+      time: new Date(),
+      isRollback: logData.isRollback ?? false,
+      rollbackTransaction: logData.rollbackTransaction ?? null
     };
   }
 
@@ -99,6 +103,8 @@ export class LogService {
     plugin?: string
     oldValue?: number
     transactionId?: string
+    isRollback?: boolean
+    rollbackTransaction?: string
   }) {
     if (!this.cfg.log_enabled) return;
     logData.plugin ??= 'unknown';

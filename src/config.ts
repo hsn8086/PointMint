@@ -1,6 +1,7 @@
 import { Schema } from 'koishi'
 
 export interface Config {
+    
     check_points_command_set: boolean
     check_points_command?: string
     auto_log_username: boolean 
@@ -15,6 +16,7 @@ export interface Config {
 export const Config: Schema<Config> = Schema.intersect([
     Schema.object({
         check_points_command_set: Schema.boolean().default(true).description('是否为用户提供查询积分的指令'),
+
     }).description('基础设置'),
     Schema.union([
         Schema.object({

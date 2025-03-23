@@ -76,22 +76,11 @@ export class PointService extends Service {
       throw new Error('查询积分失败：' + error)
     }
   }
-  async getUserName(userid: string, pluginName?: string): Promise<string> {
-    try {
-      const row = await this.ctx.database.get(database_name, { userid })
-      this.logService.writelog({ userid: userid, operationType: 'get', plugin: pluginName, statusCode: 200 })
-      return row.length ? row[0].username : '未知'
-    } catch (error) {
-      this.logService.writelog({ userid: userid, operationType: 'get', plugin: pluginName, comment: `调用get时出现错误：${error}`, statusCode: 500 })
-      log.error('查询积分失败：' + error)
-      throw new Error('查询积分失败：' + error)
-    }
-  }
   // 设置用户积分，用户不存在则创建
   async set(userid: string, transactionId: string, points: number, pluginName?: string): Promise<ApiResponseNoData> {
     //校验transactionId是否是合法的
     if (TransactionIdGenerator.validate(transactionId) === false) {
-      this.logService.writelog({ userid: userid, operationType: 'set', plugin: pluginName, comment: `调用get时出现错误：transactionId无效`, statusCode: 400 })
+      this.logService.writelog({ userid: userid, operationType: 'set', plugin: pluginName, comment: `调用set时出现错误：transactionId无效`, statusCode: 400 })
       return { code: 400, msg: 'transactionId无效' }
     }
     if (points < 0) {
@@ -217,8 +206,103 @@ export class PointService extends Service {
       return { code: 500, msg: '更新用户名失败' }
     }
   }
+  async getUserName(userid: string, pluginName?: string): Promise<string> {
+    try {
+      const row = await this.ctx.database.get(database_name, { userid })
+      this.logService.writelog({ userid: userid, operationType: 'get', plugin: pluginName, statusCode: 200 })
+      return row.length ? row[0].username : '未知'
+    } catch (error) {
+      this.logService.writelog({ userid: userid, operationType: 'get', plugin: pluginName, comment: `调用get时出现错误：${error}`, statusCode: 500 })
+      log.error('查询积分失败：' + error)
+      throw new Error('查询积分失败：' + error)
+    }
+  }
 
-  async getTopUsers(num: number): Promise<{
+  // 回写操作，例如扣除的积分后如果需要回写（例如兑换的商品兑换出现异常），可以调用此方法回写积分
+  async rollback(transactionId: string, pluginName?: string): Promise<ApiResponseNoData> {
+    if (TransactionIdGenerator.validate(transactionId) === false) {
+      this.logService.writelog({ userid: '0', operationType: 'rollback', plugin: pluginName, comment: `调用rollback时出现错误：transactionId无效`, statusCode: 400 })
+      return { code: 400, msg: 'transactionId无效' }
+    }
+    try {
+      const log = await this.ctx.database.get(database_name_log, { transactionId })
+      if (log.length === 0) {
+        this.logService.writelog({ userid: '0', operationType: 'rollback', plugin: pluginName, comment: `调用rollback时出现错误：transactionId无效`, statusCode: 400 })
+        return { code: 400, msg: 'transactionId无效' }
+      }
+
+      // 检查是否已经回滚过
+      if (log[0].isRollback) {
+        this.logService.writelog({
+          userid: log[0].userid,
+          operationType: 'rollback',
+          plugin: pluginName,
+          comment: `调用rollback时出现错误：该事务已被回滚`,
+          statusCode: 400
+        })
+        return { code: 400, msg: '该事务已被回滚' }
+      }
+
+      const { userid, oldValue } = log[0]
+      await this.ctx.database.set(database_name, { userid }, { points: oldValue })
+
+      // 更新原始日志，标记为已回滚
+      const rollbackId = this.generateTransactionId()
+      await this.ctx.database.set(database_name_log, { transactionId }, {
+        isRollback: true,
+        rollbackTransaction: rollbackId
+      })
+
+      // 创建回滚操作的日志
+      this.logService.writelog({
+        userid: userid,
+        operationType: 'rollback',
+        plugin: pluginName,
+        statusCode: 200,
+        transactionId: rollbackId,
+        rollbackTransaction: transactionId,
+        oldValue: log[0].newValue,
+        newValue: oldValue,
+        comment: `回滚事务 ${transactionId}`
+      })
+
+      return { code: 200, msg: '回滚成功' }
+    } catch (error) {
+      log.error('回滚失败：' + error)
+      this.logService.writelog({ userid: '0', operationType: 'rollback', plugin: pluginName, comment: `调用rollback时出现错误：${error}`, statusCode: 500 })
+      return { code: 500, msg: '回滚失败' }
+    }
+  }
+
+  /**
+ * 查询事务的回滚状态
+ * @param transactionId 事务ID
+ * @returns 回滚状态信息
+ */
+  async getTransactionStatus(transactionId: string): Promise<{
+    isRollback: boolean
+    rollbackTransaction?: string
+    rollbackTime?: Date
+  }> {
+    if (!TransactionIdGenerator.validate(transactionId)) {
+      throw new Error('无效的事务ID')
+    }
+
+    const log = await this.ctx.database.get(database_name_log, { transactionId })
+    if (log.length === 0) {
+      throw new Error('事务不存在')
+    }
+
+    return {
+      isRollback: !!log[0].isRollback,
+      rollbackTransaction: log[0].rollbackTransaction,
+      rollbackTime: log[0].isRollback ?
+        (await this.ctx.database.get(database_name_log, { transactionId: log[0].rollbackTransaction }))[0]?.time :
+        undefined
+    }
+  }
+
+  async getTopN(num: number): Promise<{
     userid: string
     username: string
     points: number
