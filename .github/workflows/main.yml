@@ -25,7 +25,7 @@ jobs:
         id: check_version
         run: |
           $version = node -p "require('./package.json').version"
-          if ($version -notmatch "-dev" -and $version -notmatch "-beta") {
+          if ($version -notmatch "-dev") {
             echo "is_release=true" >> $env:GITHUB_OUTPUT
           } else {
             echo "is_release=false" >> $env:GITHUB_OUTPUT
