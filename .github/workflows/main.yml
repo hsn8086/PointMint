@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
         
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -25,7 +27,7 @@ jobs:
         run: npm run build
 
       - name: Publish to npm
-        if: contains(github.ref, 'dev') == false
+        if: "!contains(github.ref, 'dev')"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish
