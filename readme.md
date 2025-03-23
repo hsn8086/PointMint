@@ -5,14 +5,12 @@
 
 模块化架构｜可审计事务追踪｜实时积分生态 - 基于双效校验机制的经济引擎
 
-<mcfile name="index.ts" path="d:\koishi\koishi\external\pointmint\src\index.ts"></mcfile>
-
 ## 功能特性
 
 ### 核心能力
-- **双效校验机制**：通过<mcsymbol name="TransactionIdGenerator" filename="index.ts" path="d:\koishi\koishi\external\pointmint\src\index.ts" startline="6" type="class"></mcsymbol>实现事务ID生成与验证，确保每笔积分操作的可追溯性
-- **实时积分系统**：提供<mcsymbol name="PointService" filename="index.ts" path="d:\koishi\koishi\external\pointmint\src\index.ts" startline="44" type="class"></mcsymbol>类实现完整的积分生命周期管理（增/删/查/改）
-- **审计追踪体系**：通过<mcsymbol name="LogService" filename="logService.ts" path="d:\koishi\koishi\external\pointmint\src\logService.ts" startline="11" type="class"></mcsymbol>记录全量操作日志，支持自定义日志保留策略
+- **双效校验机制**：通过实现事务ID生成与验证，确保每笔积分操作的可追溯性
+- **实时积分系统**：提供类实现完整的积分生命周期管理（增/删/查/改）
+- **审计追踪体系**：通过记录全量操作日志，支持自定义日志保留策略
 
 ### 功能亮点
 - 用户积分排行榜（TopN 查询）
@@ -57,7 +55,7 @@ export interface ApiResponseNoData {
 ```typescript
 async set(
   userid: string, // 用户唯一标识符
-  transactionId: string, // 事务id，通过ctx.points.generateTransactionId()生成
+  transactionId: string, // 事务id，见第二节
   points: number, // 积分值，必须 >= 0
   pluginName?: string // 插件名，用于追踪调用关系
 ): Promise<ApiResponseNoData>
@@ -83,15 +81,6 @@ async reduce(
 ): Promise<ApiResponseNoData>
  ```
 
-4. 更新用户名
-```typescript
-async updateUserName(
-  userid: string,
-  username: string,
-  pluginName?: string
-): Promise<ApiResponseNoData>
- ```
-
 5. 获取积分排行
 ```typescript
 async getTopN(
@@ -106,4 +95,32 @@ async getTopN(
     { userid: '123456', username: 'Alice', points: 100},
     { userid: '654321', username: 'Bob', points: 90}
 ]
+ ```
+
+ ### 2. 获取事务id
+ 事务id是用于操作积分的必要数值，对积分进行操作的方法都需要传入事务id。
+ 你可以通过以下方法获取事务id：
+ ```typescript
+ async generateTransactionId(): Promise<string>
+ ```
+
+ ### 3. 其他方法
+ 
+1. 更新用户名
+```typescript
+async updateUserName(
+  userid: string,
+  username: string,
+  pluginName?: string
+): Promise<ApiResponseNoData>
+ ```
+
+ 2. 回写操作
+ 回写操作是将某项操作回写。例如，你通过reduce方法后，所要提供的服务未能正常提供，可以通过该方法回退
+```typescript
+async rollback(
+  userid: string,
+  transactionId: string,
+  pluginName?: string
+): Promise<ApiResponseNoData>
  ```
