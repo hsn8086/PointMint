@@ -7,42 +7,42 @@ on:
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu-latest
-    
+    runs-on: windows-latest
     steps:
       - name: 检出代码
         uses: actions/checkout@v3
-      
+        
       - name: 设置 Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           registry-url: 'https://registry.npmjs.org'
-      
+          
       - name: 安装依赖
-        run: npm install
-      
+        run: yarn install
+        
       - name: 检查版本
         id: check_version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          if [[ $VERSION != *dev* ]]; then
-            echo "is_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_release=false" >> $GITHUB_OUTPUT
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: 构建 TypeScript
+          $version = node -p "require('./package.json').version"
+          if ($version -notmatch "-dev" -and $version -notmatch "-beta") {
+            echo "is_release=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "is_release=false" >> $env:GITHUB_OUTPUT
+          }
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+        
+      - name: 构建项目
         if: steps.check_version.outputs.is_release == 'true'
-        run: npm run build
-      
+        run: yarn build
+        
       - name: 发布到 NPM
         if: steps.check_version.outputs.is_release == 'true'
-        run: npm publish
+        run: yarn workspace koishi-plugin-pointmint publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
+          
       - name: 创建 GitHub Release
         if: steps.check_version.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v1
