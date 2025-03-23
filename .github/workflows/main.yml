@@ -2,8 +2,6 @@ name: Publish PointMint Plugin
 
 on:
   push:
-    tags:
-      - 'v*'
     paths:
       - 'external/pointmint/**'
 
