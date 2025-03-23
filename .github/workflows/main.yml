@@ -1,53 +1,33 @@
-name: 构建与发布
+name: Publish Plugin
 
 on:
   push:
-    branches: [ main, master ]
-    tags: [ 'v*' ]
+    tags:
+      - 'v*'
 
 jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
-    
+  publish:
+    runs-on: windows-latest
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v3
-      
-      - name: 设置 Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          node-version: '18'
+          fetch-depth: 0
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
-      
-      - name: 安装依赖
+
+      - name: Install dependencies
         run: npm install
-      
-      - name: 检查版本
-        id: check_version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          if [[ $VERSION != *dev* ]]; then
-            echo "is_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_release=false" >> $GITHUB_OUTPUT
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: 构建 TypeScript
-        if: steps.check_version.outputs.is_release == 'true'
+
+      - name: Build plugin
         run: npm run build
-      
-      - name: 发布到 NPM
-        if: steps.check_version.outputs.is_release == 'true'
-        run: npm publish
+
+      - name: Publish to npm
+        if: "!contains(github.ref, 'dev')"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      
-      - name: 创建 GitHub Release
-        if: steps.check_version.outputs.is_release == 'true'
-        uses: softprops/action-gh-release@v1
-        with:
-          name: v${{ steps.check_version.outputs.version }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm publish
