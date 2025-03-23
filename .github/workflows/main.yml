@@ -1,0 +1,54 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check version
+        id: check_version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ $VERSION != *dev* ]]; then
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Build TypeScript
+        if: steps.check_version.outputs.is_release == 'true'
+        run: |
+          npm run build || npm run compile || npx tsc
+      
+      - name: Publish to NPM
+        if: steps.check_version.outputs.is_release == 'true'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      - name: Create GitHub Release
+        if: steps.check_version.outputs.is_release == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          name: v${{ steps.check_version.outputs.version }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
