@@ -1,7 +1,7 @@
 {
   "name": "koishi-plugin-pointmint",
   "description": "Points management system plugin",
-  "version": "0.0.6-dev",
+  "version": "0.0.6-beta1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -12,6 +12,10 @@
     "小舍 <DMB-codegang@users.noreply.github.com>"
   ],
   "license": "AGPL-3.0",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "homepage": "https://github.com/DMB-codegang/PointMint",
   "repository": {
     "type": "git",
@@ -21,7 +25,6 @@
     "chatbot",
     "koishi",
     "plugin",
-    "points",
     "points"
   ],
   "peerDependencies": {
