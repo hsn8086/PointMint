@@ -3,7 +3,7 @@ name: Publish Plugin
 on:
   push:
     tags:
-      - 'v*[!dev]*'
+      - 'v*'
 
 jobs:
   publish:
@@ -19,15 +19,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        working-directory: external/pointmint
         run: npm install
 
       - name: Build plugin
-        working-directory: external/pointmint
         run: npm run build
 
       - name: Publish to npm
-        working-directory: external/pointmint
+        if: contains(github.ref, 'dev') == false
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish
