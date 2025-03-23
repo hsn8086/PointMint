@@ -2,40 +2,34 @@ name: Publish PointMint Plugin
 
 on:
   push:
+    branches: [ main ]
     paths:
-      - 'external/pointmint/**'
+      - 'external/pointmint/package.json'
 
 jobs:
   build-and-publish:
-    runs-on: ubuntu
-    if: "!contains(github.ref, 'dev')"
-    
+    runs-on: windows-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        registry-url: 'https://registry.npmjs.org'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          registry-url: 'https://registry.npmjs.org'
 
-    - name: Initialize Koishi Project
-      run: |
-        npm init koishi@latest --yes
-        cd koishi-project
-        mkdir external\pointmint
-        cp -r ../external/pointmint/* external\pointmint/
+      - name: Get package version
+        id: get_version
+        working-directory: external/pointmint
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
-    - name: Build Plugin
-      run: |
-        cd koishi-project
-        npm install
-        npm run build pointmint
-
-    - name: Publish to NPM
-      run: |
-        cd koishi-project
-        npm run pub pointmint
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Build and publish
+        working-directory: external/pointmint
+        if: steps.get_version.outputs.VERSION != '' && !contains(steps.get_version.outputs.VERSION, 'dev')
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm install
+          npm run build
+          npm run pub
