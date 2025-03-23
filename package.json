@@ -13,6 +13,8 @@
   ],
   "license": "AGPL-3.0",
   "scripts": {
+    "preinstall": "corepack enable",
+    "pub": "yakumo publish",
     "build": "yakumo build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
