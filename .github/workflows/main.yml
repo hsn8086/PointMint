@@ -1,33 +1,43 @@
-name: Publish Plugin
+name: Publish PointMint Plugin
 
 on:
   push:
     tags:
       - 'v*'
+    paths:
+      - 'external/pointmint/**'
 
 jobs:
-  publish:
+  build-and-publish:
     runs-on: windows-latest
+    if: "!contains(github.ref, 'dev')"
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: npm install
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        registry-url: 'https://registry.npmjs.org'
 
-      - name: Build plugin
-        run: npm run build
+    - name: Initialize Koishi Project
+      run: |
+        npm init koishi@latest --yes
+        cd koishi-project
+        mkdir external\pointmint
+        cp -r ../external/pointmint/* external\pointmint/
 
-      - name: Publish to npm
-        if: "!contains(github.ref, 'dev')"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish
+    - name: Build Plugin
+      run: |
+        cd koishi-project
+        npm install
+        npm run build pointmint
+
+    - name: Publish to NPM
+      run: |
+        cd koishi-project
+        npm run pub pointmint
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
