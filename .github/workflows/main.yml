@@ -19,9 +19,9 @@ jobs:
         run: |
           python -c "import json
           with open('package.json') as f:
-          j=json.load(f)
-          if 'dev' in j.get('version'):
-              raise Exception('Dev ver')"
+            j=json.load(f)
+            if 'dev' in j.get('version'):
+                raise Exception('Dev ver')"
         
       - name: Checkout code
         uses: actions/checkout@v4
