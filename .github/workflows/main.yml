@@ -17,7 +17,11 @@ jobs:
           
       - name: Check version
         working-directory: external/pointmint
-        run: python ver_checker.py
+        run: |
+          python -c "import jsonwith open('package.json') as f:
+          j=json.load(f)
+          if 'dev' in j.get('version'):
+              raise Exception('Dev ver')"
         
       - name: Checkout code
         uses: actions/checkout@v4
