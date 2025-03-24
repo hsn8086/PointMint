@@ -17,7 +17,8 @@ jobs:
           
       - name: Check version
         run: |
-          python -c "import jsonwith open('package.json') as f:^
+          python -c "import json^
+          with open('package.json') as f:^
           j=json.load(f)^
           if 'dev' in j.get('version'):^
               raise Exception('Dev ver')"
