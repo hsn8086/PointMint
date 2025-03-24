@@ -32,14 +32,14 @@ jobs:
           node-version: 18.x
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Get package version
-        id: get_version
-        working-directory: external/pointmint
-        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      # - name: Get package version
+      #   id: get_version
+      #   working-directory: external/pointmint
+      #   run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
       - name: Build and publish
-        working-directory: external/pointmint
-        if: steps.get_version.outputs.VERSION != '' && !contains(steps.get_version.outputs.VERSION, 'dev')
+        # working-directory: external/pointmint
+        # if: steps.get_version.outputs.VERSION != '' && !contains(steps.get_version.outputs.VERSION, 'dev')
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
